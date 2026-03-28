@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import Sidebar from "@/components/sidebar";
+import { MobileNav } from "@/components/mobile-nav";
 import { ChatWidget } from "@/components/chat/chat-widget";
 
 export default async function DashboardLayout({
@@ -16,10 +17,10 @@ export default async function DashboardLayout({
   if (!user) redirect("/auth/login");
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: "var(--cream)" }}>
+    <div className="flex h-screen md:overflow-hidden" style={{ background: "var(--cream)" }}>
       <Sidebar />
       <main
-        className="flex-1 overflow-y-auto"
+        className="flex-1 overflow-y-auto w-full"
         style={{
           background:
             "radial-gradient(ellipse 80% 60% at 100% 0%, rgba(248,170,64,0.18) 0%, transparent 60%)," +
@@ -27,8 +28,9 @@ export default async function DashboardLayout({
             "var(--cream)",
         }}
       >
-        <div className="p-8">{children}</div>
+        <div className="p-4 pb-24 md:p-8 md:pb-8">{children}</div>
       </main>
+      <MobileNav />
       <ChatWidget />
     </div>
   );

@@ -242,14 +242,14 @@ export function ChatWidget() {
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ position: "fixed", bottom: 24, right: 24, zIndex: 1000, display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+    <div style={{ position: "fixed", bottom: 16, right: 16, zIndex: 1000, display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
 
       {/* ── Chat panel ── */}
       {isOpen && (
         <div
           style={{
-            width: 360,
-            height: 520,
+            width: "min(360px, calc(100vw - 32px))",
+            height: "min(520px, calc(100dvh - 120px))",
             marginBottom: 12,
             display: "flex",
             flexDirection: "column",

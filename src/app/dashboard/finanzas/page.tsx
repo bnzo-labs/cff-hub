@@ -247,8 +247,8 @@ export default async function FinanzasPage({
           {vista === "anual" ? "Ingresos por mes" : "Pedidos del periodo"}
         </h2>
 
-        <div className="overflow-hidden rounded-xl border" style={{ borderColor: "var(--border)" }}>
-          <table className="w-full text-sm" style={{ background: "var(--surface)" }}>
+        <div className="overflow-x-auto rounded-xl border" style={{ borderColor: "var(--border)" }}>
+          <table className="w-full text-sm" style={{ background: "var(--surface)", minWidth: 420 }}>
             <thead>
               <tr className="border-b text-left" style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}>
                 {vista === "anual"
@@ -325,7 +325,7 @@ export default async function FinanzasPage({
             >+</span>
             Agregar gasto
           </summary>
-          <form action={addExpense} className="px-5 pb-5 pt-3 grid grid-cols-2 gap-4" style={{ borderTop: "1px solid var(--border)" }}>
+          <form action={addExpense} className="px-5 pb-5 pt-3 grid grid-cols-1 sm:grid-cols-2 gap-4" style={{ borderTop: "1px solid var(--border)" }}>
             <div>
               <label className="field-label">Mes</label>
               <input name="month" type="month" required className="field w-full"
@@ -363,8 +363,8 @@ export default async function FinanzasPage({
           </form>
         </details>
 
-        <div className="overflow-hidden rounded-xl border" style={{ borderColor: "var(--border)" }}>
-          <table className="w-full text-sm" style={{ background: "var(--surface)" }}>
+        <div className="overflow-x-auto rounded-xl border" style={{ borderColor: "var(--border)" }}>
+          <table className="w-full text-sm" style={{ background: "var(--surface)", minWidth: 440 }}>
             <thead>
               <tr className="border-b text-left" style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}>
                 {["Mes", "Categoría", "Ítem", "Cantidad", "Monto"].map((h) => (

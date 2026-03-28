@@ -287,7 +287,7 @@ export function ClientesTable({ clients }: { clients: Client[] }) {
     <div className="space-y-3">
       {/* Search + page size */}
       <div className="flex flex-wrap items-center gap-3 justify-between">
-        <div className="relative flex-1 min-w-55 max-w-sm">
+        <div className="relative flex-1 min-w-0 max-w-sm">
           <i
             className="fa-solid fa-magnifying-glass"
             style={{
@@ -327,8 +327,8 @@ export function ClientesTable({ clients }: { clients: Client[] }) {
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-xl border" style={{ borderColor: "var(--border)" }}>
-        <table className="w-full text-sm" style={{ background: "var(--surface)" }}>
+      <div className="overflow-x-auto rounded-xl border" style={{ borderColor: "var(--border)" }}>
+        <table className="w-full text-sm" style={{ background: "var(--surface)", minWidth: 560 }}>
           <thead>
             <tr className="border-b text-left" style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}>
               {["Nombre", "Pedidos", "Total gastado", "Último pedido", "Acciones"].map((h) => (

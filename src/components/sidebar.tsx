@@ -13,6 +13,8 @@ const navItems = [
   { href: "/dashboard/finanzas", label: "Finanzas", icon: "fa-solid fa-coins" },
 ];
 
+export { navItems };
+
 export default function Sidebar() {
   const pathname = usePathname();
   const router   = useRouter();
@@ -26,7 +28,7 @@ export default function Sidebar() {
 
   return (
     <aside
-      className="w-60 flex flex-col h-full shrink-0"
+      className="hidden md:flex w-60 flex-col h-full shrink-0"
       style={{
         background: "var(--surface)",
         borderRight: "1.5px solid var(--border)",
@@ -40,7 +42,7 @@ export default function Sidebar() {
           width={165}
           height={91}
           priority
-          style={{ width: "165px", height: "auto" }}
+          style={{ width: "145px", height: "auto" }}
         />
         <p
           className="text-[10px] tracking-[0.2em] uppercase mt-1"
