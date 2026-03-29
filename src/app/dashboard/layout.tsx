@@ -28,7 +28,7 @@ export default async function DashboardLayout({
             "var(--cream)",
         }}
       >
-        <div className="p-4 pb-24 md:p-8 md:pb-8">{children}</div>
+        <div className="p-4 pt-[72px] md:pt-8 md:p-8">{children}</div>
       </main>
       <MobileNav />
       <ChatWidget />
