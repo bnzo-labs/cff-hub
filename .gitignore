@@ -27,3 +27,6 @@ next-env.d.ts
 
 # local data
 /data
+
+social_posts_tables.sql
+social_tables.sql

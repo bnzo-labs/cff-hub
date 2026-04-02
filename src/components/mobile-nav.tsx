@@ -12,6 +12,7 @@ const navItems = [
   { href: "/dashboard/clientes", label: "Clientes", icon: "fa-solid fa-users" },
   { href: "/dashboard/cursos",   label: "Cursos",   icon: "fa-solid fa-graduation-cap" },
   { href: "/dashboard/finanzas", label: "Finanzas", icon: "fa-solid fa-coins" },
+  { href: "/dashboard/redes",   label: "Redes",    icon: "fa-solid fa-hashtag" },
 ];
 
 export function MobileNav() {
