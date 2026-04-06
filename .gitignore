@@ -1,3 +1,5 @@
+.DS_Store
+
 # dependencies
 /node_modules
 
@@ -24,6 +26,7 @@ next-env.d.ts
 
 # local claude settings
 .claude/settings.local.json
+LAST_SESSION.md
 
 # local data
 /data
