@@ -111,3 +111,63 @@ export async function updatePostImages(id: string, urls: string[]) {
   if (error) throw new Error(error.message);
   revalidatePath("/dashboard/redes");
 }
+
+/** Carga un plan y sus posts por plan_id (para sincronizar estado del cliente tras llamada a Genaro). */
+export async function fetchPlanWithPosts(planId: string) {
+  const supabase = await createClient();
+
+  const { data: plan, error: planErr } = await supabase
+    .from("weekly_plans")
+    .select("*")
+    .eq("id", planId)
+    .single();
+  if (planErr) throw new Error(planErr.message);
+
+  const { data: posts, error: postsErr } = await supabase
+    .from("posts")
+    .select("*")
+    .eq("plan_id", planId)
+    .order("created_at", { ascending: true });
+  if (postsErr) throw new Error(postsErr.message);
+
+  return {
+    plan: plan as { id: string; week_of: string; status: string; client_id: string; created_at: string },
+    posts: (posts ?? []) as unknown[],
+  };
+}
+
+// ── Agent outputs ──────────────────────────────────────────────────────────────
+
+export async function upsertTrendsReport(id: string | null, content: string) {
+  const supabase = await createClient();
+  if (id) {
+    const { error } = await supabase
+      .from("agent_outputs")
+      .update({ content_text: content })
+      .eq("id", id);
+    if (error) throw new Error(error.message);
+  } else {
+    const { error } = await supabase
+      .from("agent_outputs")
+      .insert({ client_id: "cff", type: "trends_report", content_text: content });
+    if (error) throw new Error(error.message);
+  }
+  revalidatePath("/dashboard/redes");
+}
+
+export async function upsertVisualGuidelines(id: string | null, content: Record<string, unknown>) {
+  const supabase = await createClient();
+  if (id) {
+    const { error } = await supabase
+      .from("agent_outputs")
+      .update({ content })
+      .eq("id", id);
+    if (error) throw new Error(error.message);
+  } else {
+    const { error } = await supabase
+      .from("agent_outputs")
+      .insert({ client_id: "cff", type: "visual_guidelines", content });
+    if (error) throw new Error(error.message);
+  }
+  revalidatePath("/dashboard/redes");
+}

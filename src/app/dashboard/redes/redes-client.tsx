@@ -7,6 +7,8 @@ import { FormatChart, CaptionChart } from "./analiticas-charts";
 import type { FormatChartData, CaptionChartData } from "./analiticas-charts";
 import PostsTab from "./posts-tab";
 import type { Post as SocialPost } from "./post-edit-modal";
+import TendenciasTab from "./tendencias-tab";
+import GuiaVisualTab from "./guia-visual-tab";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -77,6 +79,10 @@ interface Props {
   reports: AnalyticsReport[];
   plans: WeeklyPlan[];
   posts: SocialPost[];
+  trendsId: string | null;
+  trendsContent: string | null;
+  guiaId: string | null;
+  guiaContent: Record<string, unknown> | null;
 }
 
 // ── Markdown renderer ─────────────────────────────────────────────────────────
@@ -912,13 +918,15 @@ function AnaliticasView({ reports }: { reports: AnalyticsReport[] }) {
 // ── Main export ───────────────────────────────────────────────────────────────
 
 const TABS = [
-  { id: "posts"      as const, label: "Posts",       icon: "fa-solid fa-calendar-week" },
-  { id: "marca"      as const, label: "Marca",       icon: "fa-solid fa-star" },
-  { id: "analiticas" as const, label: "Analíticas",  icon: "fa-solid fa-chart-bar" },
+  { id: "posts"       as const, label: "Posts",        icon: "fa-solid fa-calendar-week" },
+  { id: "marca"       as const, label: "Marca",        icon: "fa-solid fa-star" },
+  { id: "analiticas"  as const, label: "Analíticas",   icon: "fa-solid fa-chart-bar" },
+  { id: "tendencias"  as const, label: "Tendencias",   icon: "fa-solid fa-arrow-trend-up" },
+  { id: "guia-visual" as const, label: "Guía Visual",  icon: "fa-solid fa-palette" },
 ];
 
-export default function RedesClient({ brandDocs, reports, plans, posts }: Props) {
-  const [tab, setTab] = useState<"marca" | "analiticas" | "posts">("posts");
+export default function RedesClient({ brandDocs, reports, plans, posts, trendsId, trendsContent, guiaId, guiaContent }: Props) {
+  const [tab, setTab] = useState<"marca" | "analiticas" | "posts" | "tendencias" | "guia-visual">("posts");
 
   return (
     <div className="space-y-6">
@@ -991,6 +999,14 @@ export default function RedesClient({ brandDocs, reports, plans, posts }: Props)
 
       {tab === "posts" && (
         <PostsTab initialPlans={plans} initialPosts={posts} />
+      )}
+
+      {tab === "tendencias" && (
+        <TendenciasTab initialId={trendsId} initialContent={trendsContent} />
+      )}
+
+      {tab === "guia-visual" && (
+        <GuiaVisualTab initialId={guiaId} initialContent={guiaContent} />
       )}
     </div>
   );

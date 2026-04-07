@@ -9,6 +9,8 @@ export default async function RedesPage() {
     { data: reports },
     { data: plans },
     { data: posts },
+    { data: trendsRow },
+    { data: guiaRow },
   ] = await Promise.all([
     supabase.from("social_brand_docs").select("*").order("type"),
     supabase
@@ -23,6 +25,20 @@ export default async function RedesPage() {
       .from("posts")
       .select("*")
       .order("created_at", { ascending: true }),
+    supabase
+      .from("agent_outputs")
+      .select("id, content_text")
+      .eq("type", "trends_report")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("agent_outputs")
+      .select("id, content")
+      .eq("type", "visual_guidelines")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
 
   return (
@@ -31,6 +47,10 @@ export default async function RedesPage() {
       reports={reports ?? []}
       plans={plans ?? []}
       posts={posts ?? []}
+      trendsId={trendsRow?.id ?? null}
+      trendsContent={trendsRow?.content_text ?? null}
+      guiaId={guiaRow?.id ?? null}
+      guiaContent={(guiaRow?.content as Record<string, unknown>) ?? null}
     />
   );
 }

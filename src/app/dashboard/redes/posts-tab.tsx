@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useTransition, useEffect } from "react";
-import { createWeeklyPlan, addCustomPost, deletePost } from "./actions";
+import { fetchPlanWithPosts, addCustomPost, deletePost } from "./actions";
 import PostEditModal, { StatusBadge, FormatBadge } from "./post-edit-modal";
 import type { Post } from "./post-edit-modal";
 
@@ -739,11 +739,23 @@ export default function PostsTab({ initialPlans, initialPosts }: Props) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Error del agente");
 
-      startTransition(async () => {
-        const result = await createWeeklyPlan(weekOf, data.posts);
-        setPlans((prev) => [result.plan, ...prev]);
-        setAllPosts((prev) => [...prev, ...(result.posts as Post[])]);
-      });
+      // The API route already saved the plan and posts to Supabase.
+      // Fetch the saved rows by plan_id so we have real IDs in client state.
+      const planId: string | null = data.plan_id ?? null;
+      if (planId) {
+        startTransition(async () => {
+          const result = await fetchPlanWithPosts(planId);
+          setPlans((prev) => {
+            const exists = prev.some((p) => p.id === result.plan.id);
+            return exists ? prev.map((p) => p.id === result.plan.id ? result.plan : p) : [result.plan, ...prev];
+          });
+          setAllPosts((prev) => {
+            const newPosts = (result.posts as Post[]).filter((np) => !prev.some((p) => p.id === np.id));
+            return [...prev, ...newPosts];
+          });
+          setWeekOf(result.plan.week_of);
+        });
+      }
     } catch (e) {
       setGenerateError(e instanceof Error ? e.message : "Error al generar el plan");
     } finally {

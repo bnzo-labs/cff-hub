@@ -1,34 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import fs from "fs";
-import path from "path";
+import { createClient } from "@/lib/supabase/server";
 
 const anthropic = new Anthropic();
 
-// ── Knowledge paths (bnzo-agency repo) ───────────────────────────────────────
-
-const KNOWLEDGE_DIR = path.resolve(
-  process.env.GENARO_KNOWLEDGE_DIR ||
-    path.join(process.cwd(), "../bnzo-agency/clients/cook-for-friends/knowledge")
-);
-const TRENDS_DIR = path.resolve(path.join(KNOWLEDGE_DIR, "../trends"));
 const CLIENT = "Cook for Friends Mtl";
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-function readIfExists(filePath: string): string | null {
-  return fs.existsSync(filePath) ? fs.readFileSync(filePath, "utf-8") : null;
-}
-
-function findLatest(dir: string, keyword: string, ext: string): string | null {
-  if (!fs.existsSync(dir)) return null;
-  const files = fs
-    .readdirSync(dir)
-    .filter((f) => f.includes(keyword) && f.endsWith(ext))
-    .sort()
-    .reverse();
-  return files.length > 0 ? path.join(dir, files[0]) : null;
-}
+// ── Date helpers ─────────────────────────────────────────────────────────────
 
 function getNextMonday(): Date {
   const d = new Date();
@@ -52,61 +30,73 @@ function getWeekDates(startMonday: Date): Array<{ name: string; date: string }> 
   });
 }
 
-// ── Load knowledge context ───────────────────────────────────────────────────
+// ── Load knowledge context from Supabase ─────────────────────────────────────
 
-function loadInputs(): {
+interface Inputs {
   brandKnowledge: string | null;
   priorities: string | null;
   memory: Record<string, unknown> | null;
   trends: string | null;
   guidelines: Record<string, unknown> | null;
-} {
-  const brandFile = fs
-    .readdirSync(KNOWLEDGE_DIR)
-    .filter((f) => f.startsWith("brand_knowledge") && f.endsWith(".md"))
-    .sort((a, b) => b.length - a.length)[0];
-
-  const brandKnowledge = brandFile
-    ? fs.readFileSync(path.join(KNOWLEDGE_DIR, brandFile), "utf-8")
-    : null;
-
-  const priorities = readIfExists(path.join(KNOWLEDGE_DIR, "current_priorities.md"));
-
-  const memoryRaw = readIfExists(path.join(KNOWLEDGE_DIR, "memory.json"));
-  const memory = memoryRaw ? (JSON.parse(memoryRaw) as Record<string, unknown>) : null;
-
-  const trendsPath = findLatest(TRENDS_DIR, "trends_report", ".md");
-  const trends = trendsPath ? fs.readFileSync(trendsPath, "utf-8") : null;
-
-  const guidelinesPath = findLatest(TRENDS_DIR, "visual_guidelines", ".json");
-  const guidelinesRaw = guidelinesPath ? readIfExists(guidelinesPath) : null;
-  const guidelines = guidelinesRaw
-    ? (JSON.parse(guidelinesRaw) as Record<string, unknown>)
-    : null;
-
-  return { brandKnowledge, priorities, memory, trends, guidelines };
 }
 
-// ── System prompt (from SKILL.md) ────────────────────────────────────────────
+async function loadInputs(): Promise<Inputs> {
+  const supabase = await createClient();
+
+  const [brandDoc, prioritiesDoc, analyticsRow, trendsRow, guidelinesRow] = await Promise.all([
+    supabase
+      .from("social_brand_docs")
+      .select("content")
+      .eq("type", "brand_knowledge")
+      .single(),
+    supabase
+      .from("social_brand_docs")
+      .select("content")
+      .eq("type", "priorities")
+      .single(),
+    supabase
+      .from("social_analytics_reports")
+      .select("*")
+      .order("report_date", { ascending: false })
+      .limit(1)
+      .single(),
+    supabase
+      .from("agent_outputs")
+      .select("content_text")
+      .eq("type", "trends_report")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single(),
+    supabase
+      .from("agent_outputs")
+      .select("content")
+      .eq("type", "visual_guidelines")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single(),
+  ]);
+
+  return {
+    brandKnowledge: brandDoc.data?.content ?? null,
+    priorities: prioritiesDoc.data?.content ?? null,
+    memory: analyticsRow.data ? (analyticsRow.data as Record<string, unknown>) : null,
+    trends: trendsRow.data?.content_text ?? null,
+    guidelines: guidelinesRow.data?.content
+      ? (guidelinesRow.data.content as Record<string, unknown>)
+      : null,
+  };
+}
+
+// ── System prompt ─────────────────────────────────────────────────────────────
 
 function buildSystemPrompt(): string {
-  const skillPath = path.resolve(
-    process.env.GENARO_SKILL_PATH ||
-      path.join(
-        process.cwd(),
-        "../bnzo-agency/agents/skills/genaro/SKILL.md"
-      )
-  );
-  if (fs.existsSync(skillPath)) {
-    return fs.readFileSync(skillPath, "utf-8");
-  }
   return "Eres un estratega de contenido especializado en redes sociales para negocios latinoamericanos.";
 }
 
 // ── User prompt builder ──────────────────────────────────────────────────────
 
 function buildUserPrompt(
-  inputs: ReturnType<typeof loadInputs>,
+  inputs: Inputs,
   weekDates: ReturnType<typeof getWeekDates>
 ): string {
   const weekStart = weekDates[0].date;
@@ -189,6 +179,83 @@ Devuelve ÚNICAMENTE un bloque JSON válido con esta estructura exacta:
 Solo el bloque JSON. Sin texto antes ni después.`;
 }
 
+// ── Save plan to Supabase ────────────────────────────────────────────────────
+
+const DAY_MAP: Record<string, string> = {
+  miércoles: "miercoles",
+  sábado: "sabado",
+};
+
+const FORMAT_MAP: Record<string, string> = {
+  reel: "video",
+  story: "foto",
+  carrusel: "carrusel",
+  foto: "foto",
+  video: "video",
+};
+
+interface GenaroPost {
+  day: string;
+  date: string;
+  platform: string;
+  format: string;
+  hook: string;
+  caption_instagram: string;
+  caption_tiktok: string;
+  hashtags_ig: string[];
+  hashtags_tiktok: string[];
+  visual_brief: string;
+  image_suggestion: string;
+}
+
+interface WeeklyPlan {
+  week_start: string;
+  posts: GenaroPost[];
+}
+
+async function savePlanToDb(plan: WeeklyPlan) {
+  const supabase = await createClient();
+  const weekOf = plan.week_start;
+
+  // Upsert the weekly plan row (idempotent on client_id + week_of)
+  const { data: planRow, error: planErr } = await supabase
+    .from("weekly_plans")
+    .upsert(
+      { client_id: "cook-for-friends-mtl", week_of: weekOf, status: "draft" },
+      { onConflict: "client_id,week_of" }
+    )
+    .select()
+    .single();
+
+  if (planErr) throw new Error(`weekly_plans upsert: ${planErr.message}`);
+
+  // Delete existing posts for this plan before re-inserting
+  await supabase.from("posts").delete().eq("plan_id", planRow.id);
+
+  const rows = plan.posts.map((p) => ({
+    plan_id: planRow.id,
+    day_of_week: DAY_MAP[p.day] ?? p.day,
+    scheduled_at: p.date ? new Date(p.date).toISOString() : null,
+    platform: ["instagram", "tiktok", "both"].includes(p.platform)
+      ? p.platform
+      : "instagram",
+    format: FORMAT_MAP[p.format] ?? null,
+    hook: p.hook ?? null,
+    caption_ig: p.caption_instagram ?? null,
+    caption_tiktok: p.caption_tiktok ?? null,
+    hashtags_ig: p.hashtags_ig ?? [],
+    hashtags_tiktok: p.hashtags_tiktok ?? [],
+    visual_brief: p.visual_brief ?? null,
+    image_suggestion: p.image_suggestion ?? null,
+    status: "draft",
+  }));
+
+  const { error: postsErr } = await supabase.from("posts").insert(rows);
+  if (postsErr) throw new Error(`posts insert: ${postsErr.message}`);
+
+  return planRow as { id: string; week_of: string };
+}
+
 // ── POST handler ─────────────────────────────────────────────────────────────
 
 interface RequestBody {
@@ -199,7 +266,7 @@ interface RequestBody {
 export async function POST(req: NextRequest) {
   const body: RequestBody = await req.json().catch(() => ({}));
 
-  const inputs = loadInputs();
+  const inputs = await loadInputs();
   const nextMonday = getNextMonday();
   const weekDates = getWeekDates(nextMonday);
 
@@ -224,14 +291,23 @@ export async function POST(req: NextRequest) {
   const jsonMatch = rawText.match(/```json\n([\s\S]*?)\n```/);
   if (jsonMatch) {
     try {
-      const plan = JSON.parse(jsonMatch[1]);
+      const plan: WeeklyPlan = JSON.parse(jsonMatch[1]);
+
+      // Save to Supabase only for weekly plan mode (not custom prompts)
+      let savedPlan: { id: string; week_of: string } | null = null;
+      if (!body.prompt && plan.posts?.length) {
+        savedPlan = await savePlanToDb(plan);
+      }
+
       return NextResponse.json({
         success: true,
         data: plan,
+        plan_id: savedPlan?.id ?? null,
         raw: rawText,
       });
-    } catch {
-      // JSON parse failed — return raw text
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return NextResponse.json({ success: false, error: message, raw: rawText }, { status: 500 });
     }
   }
 
