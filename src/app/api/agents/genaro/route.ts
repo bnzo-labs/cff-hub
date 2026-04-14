@@ -136,6 +136,25 @@ ${inputs.trends || "No disponible."}
 
 ---
 
+## Reglas de escritura — OBLIGATORIAS
+
+El copy debe sonar como una persona real, no como una IA. Estas reglas aplican a TODOS los captions sin excepción.
+
+### Prohibido en captions
+- El guión largo "—" (em dash). Nunca. Usar punto, coma, o reescribir la frase.
+- Frases genéricas de IA: "dive into", "it's not just X, it's Y", "the magic is in the details", "elevate your", "crafted with care", "journey", "unleash", "transform your", "game-changer".
+- Listas con flechas tipo "→ Item 1 / → Item 2" en posts emocionales o de comunidad.
+- Dos puntos seguidos de lista en hooks de apertura.
+- Signos de exclamación en exceso (máximo 1 por caption).
+
+### Cómo debe sonar
+- Como Carolina hablando a una amiga, no como una marca corporativa.
+- Oraciones cortas. Respiración real. Pausas naturales.
+- Si el caption en inglés, que suene como alguien bilingüe que vive en Montreal, no como un copy writer de NYC.
+- El humor y la calidez van antes que la perfección gramatical.
+
+---
+
 ## INSTRUCCIONES
 
 Genera exactamente 7 posts, uno por día (lunes a domingo).
