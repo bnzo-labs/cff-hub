@@ -138,7 +138,16 @@ ${inputs.trends || "No disponible."}
 
 ## Reglas de escritura — OBLIGATORIAS
 
-El copy debe sonar como una persona real, no como una IA. Estas reglas aplican a TODOS los captions sin excepción.
+- El copy debe sonar como una persona real, no como una IA. 
+- Solo agregar Montreal & Brossard a los posts de cursos presenciales.
+- Todos los captions deben ser en Ingles con su version natural en Frances. 
+Ejemplo: "Your dream cake 
+          
+          FR
+
+          Le gâteau de vos rêves"
+- Los posts de cursos deben ser en español.
+Estas reglas aplican a TODOS los captions sin excepción.
 
 ### Prohibido en captions
 - El guión largo "—" (em dash). Nunca. Usar punto, coma, o reescribir la frase.
